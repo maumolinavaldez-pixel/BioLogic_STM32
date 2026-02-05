@@ -1,4 +1,4 @@
-#include <BioLogic.h>
+#include <BioLogic_STM32.h>
 
 BioLogic board;
 

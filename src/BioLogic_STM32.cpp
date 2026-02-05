@@ -1,18 +1,16 @@
-#include "BioLogic.h"
+#include "BioLogic_STM32.h"
 #include <HardwareTimer.h>
 
-// Pines físicos EXACTAMENTE como los diste
 const uint8_t BioLogic::relayPins[4] = {PB11, PB12, PB13, PB14};
 const uint8_t BioLogic::pwmPins[4] = {PA8, PA9, PA10, PA11};
 const uint8_t BioLogic::inputPins[8] = {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7};
 const uint8_t BioLogic::COMM_LED = PC13;
 
-// Variable global para el timer PWM
 HardwareTimer* _timer1 = nullptr;
 
-// Constructores EXACTAMENTE iguales
 BioLogic::BioLogic() {
     _pwmTimer = nullptr;
+    _initialized = false;
 }
 
 void BioLogic::begin() {
@@ -57,10 +55,6 @@ void BioLogic::begin() {
     digitalWrite(COMM_LED, LOW);
     delay(100);
     digitalWrite(COMM_LED, HIGH);
-}
-
-void BioLogic::begin(uint8_t sdaPin, uint8_t sclPin) {
-    begin();
 }
 
 void BioLogic::pinMode(uint8_t pin, uint8_t mode) {
@@ -188,7 +182,6 @@ void BioLogic::resetBoard() {
     delay(1000);
 }
 
-// Método privado para convertir pin lógico a físico
 uint8_t BioLogic::_logicalToPhysical(uint8_t logicalPin) {
     if (logicalPin <= r4) {
         return relayPins[logicalPin];
