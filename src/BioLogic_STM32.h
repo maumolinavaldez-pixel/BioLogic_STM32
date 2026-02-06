@@ -28,33 +28,31 @@ const uint8_t in8 = 15;
 
 class BioLogic {
 private:
-    // Variables estáticas compartidas por todas las instancias
+    // Variables estáticas
     static const uint8_t relayPins[4];
     static const uint8_t pwmPins[4];
     static const uint8_t inputPins[8];
     static const uint8_t COMM_LED;
     
-    // Variables de instancia (no estáticas)
-    HardwareTimer* _pwmTimer;
+    // Variables de instancia
+    static HardwareTimer _timer1;
     bool _initialized;
     
-    // Método privado para conversión de pines
+    // Método privado
     uint8_t _logicalToPhysical(uint8_t logicalPin);
 
 public:
     // Constructor
     BioLogic();
     
-    // Método de inicialización único (sin sobrecarga para I2C)
+    // Inicialización
     void begin();
     
-    // Métodos de control básicos
+    // Métodos básicos
     void pinMode(uint8_t pin, uint8_t mode);
     void digitalWrite(uint8_t pin, uint8_t value);
-    uint8_t digitalRead(uint8_t pin);
-    
-    // Métodos de control avanzado
     void analogWrite(uint8_t pin, uint8_t value);
+    uint8_t digitalRead(uint8_t pin);
     uint16_t analogRead(uint8_t pin);
     
     // Control de relés
@@ -66,12 +64,12 @@ public:
     // Control PWM
     void pwmPercent(uint8_t pwmNum, uint8_t percent);
     
-    // Lectura de sensores
-    float readVoltage(uint8_t inputNum);
+    // Lectura de sensores (optimizado: devuelve milivoltios enteros)
+    uint16_t readVoltage(uint8_t inputNum);
     
-    // Información del sistema
-    String getVersion();
-    String getAuthor();
+    // Información
+    const char* getVersion();
+    const char* getAuthor();
     void resetBoard();
 };
 

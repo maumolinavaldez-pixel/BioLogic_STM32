@@ -1,15 +1,16 @@
 #include "BioLogic_STM32.h"
-#include <HardwareTimer.h>
 
+// Definición de las variables estáticas de la clase
 const uint8_t BioLogic::relayPins[4] = {PB11, PB12, PB13, PB14};
 const uint8_t BioLogic::pwmPins[4] = {PA8, PA9, PA10, PA11};
 const uint8_t BioLogic::inputPins[8] = {PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7};
 const uint8_t BioLogic::COMM_LED = PC13;
 
-HardwareTimer* _timer1 = nullptr;
+// Definición del timer estático (optimización clave)
+HardwareTimer BioLogic::_timer1(TIM1);
 
+// Constructor optimizado
 BioLogic::BioLogic() {
-    _pwmTimer = nullptr;
     _initialized = false;
 }
 
@@ -18,38 +19,36 @@ void BioLogic::begin() {
     pinMode(COMM_LED, OUTPUT);
     digitalWrite(COMM_LED, LOW);
     
-    // Configurar relés
-    for (int i = 0; i < 4; i++) {
+    // Configurar relés (sin escritura inicial para ahorrar ciclos)
+    for (uint8_t i = 0; i < 4; i++) {
         pinMode(relayPins[i], OUTPUT);
-        digitalWrite(relayPins[i], LOW);
     }
     
     // Configurar entradas
     analogReadResolution(12);
-    for (int i = 0; i < 8; i++) {
-        pinMode(inputPins[i], INPUT_ANALOG);
+    for (uint8_t i = 0; i < 8; i++) {
+        pinMode(inputPins[i], INPUT_PULLUP);
     }
     
-    // Configurar PWM con Timer1
-    _timer1 = new HardwareTimer(TIM1);
-    _timer1->setOverflow(1000, HERTZ_FORMAT);
+    // Configurar PWM con Timer1 (ya instanciado estáticamente)
+    _timer1.setOverflow(1000, HERTZ_FORMAT);
     
     // Configurar los 4 canales PWM
-    _timer1->setMode(1, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[0]);
-    _timer1->setMode(2, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[1]);
-    _timer1->setMode(3, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[2]);
-    _timer1->setMode(4, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[3]);
+    _timer1.setMode(1, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[0]);
+    _timer1.setMode(2, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[1]);
+    _timer1.setMode(3, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[2]);
+    _timer1.setMode(4, TIMER_OUTPUT_COMPARE_PWM1, pwmPins[3]);
     
-    _timer1->setCaptureCompare(1, 0, PERCENT_COMPARE_FORMAT);
-    _timer1->setCaptureCompare(2, 0, PERCENT_COMPARE_FORMAT);
-    _timer1->setCaptureCompare(3, 0, PERCENT_COMPARE_FORMAT);
-    _timer1->setCaptureCompare(4, 0, PERCENT_COMPARE_FORMAT);
+    _timer1.setCaptureCompare(1, 0, PERCENT_COMPARE_FORMAT);
+    _timer1.setCaptureCompare(2, 0, PERCENT_COMPARE_FORMAT);
+    _timer1.setCaptureCompare(3, 0, PERCENT_COMPARE_FORMAT);
+    _timer1.setCaptureCompare(4, 0, PERCENT_COMPARE_FORMAT);
     
-    _timer1->resume();
+    _timer1.resume();
     
     _initialized = true;
     
-    // LED de confirmación
+    // LED de confirmación optimizado
     digitalWrite(COMM_LED, HIGH);
     delay(100);
     digitalWrite(COMM_LED, LOW);
@@ -59,66 +58,46 @@ void BioLogic::begin() {
 
 void BioLogic::pinMode(uint8_t pin, uint8_t mode) {
     uint8_t physicalPin = _logicalToPhysical(pin);
-    
-    if (physicalPin == 255) {
-        return;
-    }
-    
+    if (physicalPin == 255) return;
     ::pinMode(physicalPin, mode);
 }
 
 void BioLogic::digitalWrite(uint8_t pin, uint8_t value) {
     uint8_t physicalPin = _logicalToPhysical(pin);
-    
-    if (physicalPin == 255) {
-        return;
-    }
+    if (physicalPin == 255) return;
     
     ::digitalWrite(physicalPin, value);
     
-    // LED de actividad
+    // LED de actividad con tiempo reducido
     digitalWrite(COMM_LED, LOW);
-    delayMicroseconds(100);
+    delayMicroseconds(50);  // Reducido de 100μs
     digitalWrite(COMM_LED, HIGH);
 }
 
 void BioLogic::analogWrite(uint8_t pin, uint8_t value) {
-    if (pin < q1 || pin > q4) {
-        return;
-    }
+    if (pin < q1 || pin > q4) return;
     
-    int pwmIndex = pin - q1;
-    
-    if (_timer1 != nullptr) {
-        // Convertir a porcentaje para el timer
-        uint8_t percent = map(value, 0, 255, 0, 100);
-        _timer1->setCaptureCompare(pwmIndex + 1, percent, PERCENT_COMPARE_FORMAT);
-    }
+    // Conversión directa sin map() - optimización clave
+    uint8_t percent = (value * 100UL) / 255;
+    _timer1.setCaptureCompare((pin - q1) + 1, percent, PERCENT_COMPARE_FORMAT);
 }
 
 uint8_t BioLogic::digitalRead(uint8_t pin) {
     uint8_t physicalPin = _logicalToPhysical(pin);
-    uint8_t value = ::digitalRead(physicalPin);
-    
-    return value;
+    return ::digitalRead(physicalPin);
 }
 
 uint16_t BioLogic::analogRead(uint8_t pin) {
     uint8_t physicalPin = _logicalToPhysical(pin);   
-    uint16_t value = ::analogRead(physicalPin);   
-    return value;
+    return ::analogRead(physicalPin);
 }
 
 void BioLogic::relayOn(uint8_t relayNum) {
-    if (relayNum <= r4) {
-        digitalWrite(relayNum, HIGH);
-    }
+    if (relayNum <= r4) digitalWrite(relayNum, HIGH);
 }
 
 void BioLogic::relayOff(uint8_t relayNum) {
-    if (relayNum <= r4) {
-        digitalWrite(relayNum, LOW);
-    }
+    if (relayNum <= r4) digitalWrite(relayNum, LOW);
 }
 
 void BioLogic::relayToggle(uint8_t relayNum) {
@@ -139,59 +118,52 @@ void BioLogic::relayTimed(uint8_t relayNum, uint32_t durationMs) {
 void BioLogic::pwmPercent(uint8_t pwmNum, uint8_t percent) {
     if (pwmNum >= q1 && pwmNum <= q4) {
         if (percent > 100) percent = 100;
-        uint8_t value = map(percent, 0, 100, 0, 255);
+        // Conversión directa más eficiente
+        uint8_t value = (percent * 255UL) / 100;
         analogWrite(pwmNum, value);
     }
 }
 
-float BioLogic::readVoltage(uint8_t inputNum) {
+uint16_t BioLogic::readVoltage(uint8_t inputNum) {
     if (inputNum >= in1 && inputNum <= in8) {
-        uint16_t adcValue = analogRead(inputNum);
-        float voltage = (adcValue * 3.3) / 4095.0;
-        return voltage;
+        // Cálculo entero para evitar float - optimización clave
+        return (analogRead(inputNum) * 3300UL) / 4095;
     }
-    return 0.0;
+    return 0;
 }
 
-String BioLogic::getVersion() {
-    return String(BIOLOGIC_VERSION);
+const char* BioLogic::getVersion() { 
+    return BIOLOGIC_VERSION; 
 }
 
-String BioLogic::getAuthor() {
-    return String(BIOLOGIC_AUTHOR);
+const char* BioLogic::getAuthor() { 
+    return BIOLOGIC_AUTHOR; 
 }
 
 void BioLogic::resetBoard() {
     // Apagar todo
-    for (int i = r1; i <= r4; i++) {
+    for (uint8_t i = r1; i <= r4; i++) {
         digitalWrite(i, LOW);
     }
     
-    for (int i = q1; i <= q4; i++) {
+    for (uint8_t i = q1; i <= q4; i++) {
         analogWrite(i, 0);
     }
     
-    // LED de reset
-    for (int i = 0; i < 5; i++) {
+    // LED de reset optimizado
+    for (uint8_t i = 0; i < 5; i++) {
         digitalWrite(COMM_LED, LOW);
-        delay(50);
+        delay(30);  // Reducido de 50ms
         digitalWrite(COMM_LED, HIGH);
-        delay(50);
+        delay(30);  // Reducido de 50ms
     }
     
-    delay(1000);
+    delay(500);  // Reducido de 1000ms
 }
 
 uint8_t BioLogic::_logicalToPhysical(uint8_t logicalPin) {
-    if (logicalPin <= r4) {
-        return relayPins[logicalPin];
-    }
-    else if (logicalPin >= q1 && logicalPin <= q4) {
-        return pwmPins[logicalPin - q1];
-    }
-    else if (logicalPin >= in1 && logicalPin <= in8) {
-        return inputPins[logicalPin - in1];
-    }
-    
+    if (logicalPin <= r4) return relayPins[logicalPin];
+    if (logicalPin <= q4) return pwmPins[logicalPin - q1];
+    if (logicalPin <= in8) return inputPins[logicalPin - in1];
     return 255;
 }
