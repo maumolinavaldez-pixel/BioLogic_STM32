@@ -4,9 +4,8 @@ BioLogic board;
 
 void setup() {
   Serial.begin(115200);
-  delay(100);
-  board.begin();
-  delay(100);
+  pinMode(r1, OUTPUT);
+  delay(10);
 }
 
 void loop() {

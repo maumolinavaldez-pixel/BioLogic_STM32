@@ -4,7 +4,11 @@ BioLogic board;
 
 void setup() {
   Serial.begin(115200);
-  board.begin();
+  pinMode(r1, OUTPUT);
+  pinMode(r2, OUTPUT);
+  pinMode(q1, OUTPUT);
+  pinMode(in1, INPUT);
+  board.pwmbegin();
   Serial.println("BioLogic STM32 funcionando");
   delay(2000);
 }
@@ -25,9 +29,9 @@ void loop() {
   float volt = board.readVoltage(in1);
   Serial.print("Voltaje in1: ");
   Serial.println(volt);
-  board.pinMode(r2, OUTPUT);
-  board.digitalWrite(r2, HIGH);
+  pinMode(r2, OUTPUT);
+  digitalWrite(r2, HIGH);
   delay(500);
-  board.digitalWrite(r2, LOW);
+  digitalWrite(r2, LOW);
   delay(2000);
 }
