@@ -5,57 +5,36 @@
 #include <HardwareTimer.h>
 
 // Constantes para los pines lógicos
-const uint8_t r1 = 0;
-const uint8_t r2 = 1;
-const uint8_t r3 = 2;
-const uint8_t r4 = 3;
-const uint8_t q1 = 4;
-const uint8_t q2 = 5;
-const uint8_t q3 = 6;
-const uint8_t q4 = 7;
-const uint8_t in1 = 8;
-const uint8_t in2 = 9;
-const uint8_t in3 = 10;
-const uint8_t in4 = 11;
-const uint8_t in5 = 12;
-const uint8_t in6 = 13;
-const uint8_t in7 = 14;
-const uint8_t in8 = 15;
+const uint8_t r1 = PB11;
+const uint8_t r2 = PB12;
+const uint8_t r3 = PB13;
+const uint8_t r4 = PB14;
+const uint8_t q1 = PA8;
+const uint8_t q2 = PA9;
+const uint8_t q3 = PA10;
+const uint8_t q4 = PA11;
+const uint8_t in1 = PA0;
+const uint8_t in2 = PA1;
+const uint8_t in3 = PA2;
+const uint8_t in4 = PA3;
+const uint8_t in5 = PA4;
+const uint8_t in6 = PA5;
+const uint8_t in7 = PA6;
+const uint8_t in8 = PA7;
+const uint8_t COMM_LED = PC13;
 
-// Versión de la biblioteca
-#define BIOLOGIC_VERSION "1.0.2"
-#define BIOLOGIC_AUTHOR "Mau Molina Valdez"
 
 class BioLogic {
-private:
-    // Variables estáticas
-    static const uint8_t relayPins[4];
-    static const uint8_t pwmPins[4];
-    static const uint8_t inputPins[8];
-    static const uint8_t COMM_LED;
-    
+private:    
     // Variables de instancia
     static HardwareTimer _timer1;
-    bool _initialized;
-    
-    // Método privado
-    uint8_t _logicalToPhysical(uint8_t logicalPin);
 
 public:
     // Constructor
     BioLogic();
     
-    // Inicialización
-    void begin();
-    
-    // Métodos básicos
-    void pinMode(uint8_t pin, uint8_t mode);
-    void digitalWrite(uint8_t pin, uint8_t value);
-    void analogWrite(uint8_t pin, uint8_t value);
-    uint8_t digitalRead(uint8_t pin);
-    uint16_t analogRead(uint8_t pin);
-    
     // Control de relés
+    void pwmbegin();
     void relayOn(uint8_t relayNum);
     void relayOff(uint8_t relayNum);
     void relayToggle(uint8_t relayNum);
@@ -66,11 +45,6 @@ public:
     
     // Lectura de sensores (optimizado: devuelve milivoltios enteros)
     uint16_t readVoltage(uint8_t inputNum);
-    
-    // Información
-    const char* getVersion();
-    const char* getAuthor();
-    void resetBoard();
 };
 
 #endif // BIOLOGIC_STM32_H
